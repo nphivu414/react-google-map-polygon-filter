@@ -16,28 +16,33 @@ function CustomGoogleMap(props) {
   }
 
   function _initDefaultMarkers(google) {
-    var myLatLng = {lat: 59.98311473265551, lng: 30.359113754862896};
+    var myLatLng = {lat: 59.94656140610272, lng: 30.33084972591137};
     const marker = new google.maps.Marker({
         position: myLatLng,
-        title:"Hello World!"
+        title:"Marker 1"
     });
+    marker.addListener('click', _onMarkerClick)
     setMapMarkersRef([marker]);
     marker.setMap(mapRef.current);
   }
 
   function _onMarkerClick(marker) {
-    console.log("function_onMarkerClick -> LATTTTTTT", marker.latLng.lat())
-    console.log("function_onMarkerClick -> LATTTTTTT", marker.latLng.lng())
+    alert(`lat: ${marker.latLng.lat()} - long: $${marker.latLng.lng()}`)
   }
 
   function _onPolygonClick(google) {
     return function(polygon) {
-      console.log("function_onPolygonClick -> polygon", polygon)
+      // Remove polygon on click
       this.setMap(null);
+
+      // Show all markers on left side panel again after removing polygon
       setMapMarkersRef(previousMarkersRef.current)
+      // Show all markers on map again after removing polygon
       previousMarkersRef.current.forEach(marker => {
         marker.setMap(mapRef.current)
       });
+
+      // Revert drawing mode
       drawingManagerRef.current.setOptions({
         drawingControlOptions: {
           position: google.maps.ControlPosition.TOP_CENTER,
@@ -48,9 +53,10 @@ function CustomGoogleMap(props) {
   }
 
   function _onMarkerComplete(marker) {
+    marker.setTitle(`Marker ${mapMarkersRef.current.length + 1}`);
+    marker.addListener('click', _onMarkerClick)
     const newMarkers = [...mapMarkersRef.current, marker];
-      setMapMarkersRef(newMarkers);
-      marker.addListener('click', _onMarkerClick)
+    setMapMarkersRef(newMarkers);
   }
 
   function _onPolygonComplete(google) {
@@ -59,14 +65,14 @@ function CustomGoogleMap(props) {
       previousMarkersRef.current = mapMarkersRef.current;
 
       const selectedMarkers = [];
-      for (var i = 0; i < mapMarkersRef.current.length; i++) {
-          const currentMarker = mapMarkersRef.current[i];
-          if (google.maps.geometry.poly.containsLocation(currentMarker.getPosition(), polygon)) {
-            selectedMarkers.push(currentMarker);
-          } else {
-            currentMarker.setMap(null)
-          }
-      }
+
+      mapMarkersRef.current.forEach(currentMarker => {
+        if (google.maps.geometry.poly.containsLocation(currentMarker.getPosition(), polygon)) {
+          selectedMarkers.push(currentMarker);
+        } else {
+          currentMarker.setMap(null)
+        }
+      });
 
       setMapMarkersRef(selectedMarkers)
       drawingManagerRef.current.setOptions({
@@ -103,6 +109,7 @@ function CustomGoogleMap(props) {
     mapRef.current = map;
     const drawingManager = _createGoogleMapDrawingManager(google);
     drawingManagerRef.current = drawingManager;
+
     google.maps.event.addListener(drawingManager, 'markercomplete', _onMarkerComplete);
     google.maps.event.addListener(drawingManager, 'polygoncomplete', _onPolygonComplete(google));
     drawingManager.setMap(map);
@@ -110,12 +117,10 @@ function CustomGoogleMap(props) {
     _initDefaultMarkers(google)
   }
 
-  console.log('mapMarkers', mapMarkers)
-
   return (
     <div style={{ width: '80%', margin: '0 auto' }}>
-      <div class="columns" style={{ height: '80vh' }}>
-        <div class="column">
+      <div class="columns">
+        <div class="column" style={{ height: 500 }}>
           <GoogleMapReact
             bootstrapURLKeys={{ key: 'AIzaSyDqNBEcO5PP4Q471pE4W3qy3wQkRZwaJZo', libraries: ['drawing', 'geometry'].join(','), }}
             defaultCenter={props.center}

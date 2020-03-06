@@ -13,7 +13,8 @@ function SelectedMarkers(props) {
             <span class="panel-icon">
               <i class="fas fa-map-marker" aria-hidden="true"></i>
             </span>
-            {`Lat: ${marker.position.lat()} - Long: ${marker.position.lng()}`}
+            <span><strong>{marker.title}:</strong></span>
+            <span style={{ marginLeft: 5 }}>{`lat: ${marker.position.lat()} - long: ${marker.position.lng()}`}</span>
           </div>
         ))
       }
